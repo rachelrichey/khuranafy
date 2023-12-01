@@ -1,0 +1,12 @@
+# Ignore node_modules at the root level
+node_modules/
+
+# Ignore backend and frontend build artifacts
+/backend/node_modules/
+/backend/dist/
+/frontend/node_modules/
+/frontend/build/
+
+# Ignore any other project-specific files or directories
+.env
+.DS_Store
