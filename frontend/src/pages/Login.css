@@ -1,0 +1,14 @@
+@font-face {
+    font-family: 'Main';
+    src: url('./static/VT323-Regular.ttf');
+
+}
+.Login, html {
+    font-family: 'Main';
+    font-size: 40px;
+    color: #a4ffa1;
+    background-color: #141414;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+}
