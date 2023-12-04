@@ -6,37 +6,25 @@ const LoginButton = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const getHashParams = () => {
-        const params = new URLSearchParams(window.location.search);
+    // Retrieve access token from the session storage
+    fetch('http://localhost:8888/session', { credentials: 'include' })
+    .then(response => response.json())
+    .then(sessionData => {
+        const { access_token, refresh_token } = sessionData;
 
-        return params;
-    };
-
-    const params = getHashParams();
-    const state = params.get('state');
-    const code = params.get('code');
-
-    const access_token = 'foo';
-    const refresh_token = 'bar';
-
-    if (error) {
-      setError('There was an error during the authentication');
-    } else {
-      if (access_token) {
-        setAccessToken(access_token);
-        // You can add additional logic here if needed
-      }
-      if (refresh_token) {
-        setRefreshToken(refresh_token);
-        // You can add additional logic here if needed
-      }
-      console.log(params);
-    }
+        if (access_token) {
+            setAccessToken(access_token);
+        }
+        if (refresh_token) {
+            setRefreshToken(refresh_token);
+        }
+    })
+    .catch(error => console.error('Error fetching session data:', error));
   }, []);
 
   const handleRefreshToken = async () => {
     try {
-      const response = await fetch(`/refresh_token?refresh_token=${refreshToken}`);
+      const response = await fetch(`http://localhost:8888/refresh_token?refresh_token=${refreshToken}`);
       const data = await response.json();
       setAccessToken(data.access_token);
       console.log(`New access token: ${data.access_token}`);
