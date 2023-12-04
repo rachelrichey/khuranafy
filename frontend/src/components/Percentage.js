@@ -55,3 +55,19 @@ import React from 'react';
 //for (const playlistId of playlistIds) {
     //await fetchAndExtractTrackIds(playlistId);
 //}
+//const totalKhuranaTracks = khuranaTracks.length;
+//const khuranaAverageEnergy = khuranaTracks.reduce((sum, track) => sum + track.energy, 0) / totalKhuranaTracks;
+//const khuranaAverageValence = khuranaTracks.reduce((sum, track) => sum + track.valence, 0) / totalKhuranaTracks;
+//const khuranaAverageDanceability = khuranaTracks.reduce((sum, track) => sum + track.danceability, 0) / totalKhuranaTracks;
+
+//compute similarity percentage
+//const calculateSimilarity = (averageEnergy, averageValence, averageDanceability, khuranaAverageEnergy, khuranaAverageValence, khuranaAverageDanceability) => {
+    //const euclideanDistance = Math.sqrt(
+        //Math.pow(averageEnergy - khuranaAverageEnergy, 2) +
+        //Math.pow(averageValence - khuranaAverageValence, 2) +
+        //Math.pow(averageDanceability - khuranaAverageDanceability, 2)
+    //);
+
+    //const similarity = 1 / (1 + euclideanDistance);
+    //return similarity * 100; // Convert to percentage
+//};
