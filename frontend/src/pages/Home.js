@@ -8,8 +8,8 @@ function Home() {
         <div className ="Home">
             <h1>Khuranafy</h1>
             <p>*user name* and Dean Khurana's taste match is...</p>
-            <h1>{ Percentage }</h1>
-            <p>{ PlaylistGenerator }</p>
+            <h1>< Percentage /></h1>
+            <p>< PlaylistGenerator /></p>
         </div>
     )
 }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 const PlaylistGenerator = ({ userTopTracksAudioFeatures, khuranaTracksAudioFeatures, accessToken }) => {
+    const [refreshToken, setRefreshToken] = useState('');
+    const [playlistUrl, setPlaylistUrl] = useState(null);
     //use the access token to access the API and send requests
     useEffect(() => {
         // Retrieve access token from the session storage
@@ -10,14 +12,13 @@ const PlaylistGenerator = ({ userTopTracksAudioFeatures, khuranaTracksAudioFeatu
             const { access_token, refresh_token } = sessionData;
 
             if (access_token) {
-                setAccessToken(access_token);
             }
             if (refresh_token) {
                 setRefreshToken(refresh_token);
             }
         })
         .catch(error => console.error('Error fetching session data:', error));
-    }, []);
+    }, [accessToken]);
 
   useEffect(() => {
     const createPlaylist = async () => {
@@ -32,7 +33,7 @@ const PlaylistGenerator = ({ userTopTracksAudioFeatures, khuranaTracksAudioFeatu
           body: JSON.stringify({
             name: 'Recommended Playlist',
             description: 'Your custom recommended playlist',
-            public: false, // Set to true if you want the playlist to be public
+            public: true,
           }),
         });
 
@@ -43,6 +44,7 @@ const PlaylistGenerator = ({ userTopTracksAudioFeatures, khuranaTracksAudioFeatu
 
         // Add tracks to the created playlist
         addTracksToPlaylist(playlistId);
+        setPlaylistUrl(dataCreate.external_urls.spotify);
       } catch (error) {
         console.error('Error creating playlist:', error);
       }
