@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Home from '../pages/Home.js';
 
 const LoginButton = () => {
   const [accessToken, setAccessToken] = useState('');
@@ -39,12 +40,11 @@ const LoginButton = () => {
       {error && <p>{error}</p>}
       {accessToken ? (
         <div id="logged-in">
-          <h1>Logged in with Authorization Flow!</h1>
+          <Home />
           <button onClick={handleRefreshToken}>Get a New Token!</button>
         </div>
       ) : (
         <div id="login">
-          <h1>Learning Authorization Flow Spotify</h1>
           <a href="http://localhost:8888/login">Log in with Spotify</a>
         </div>
       )}
