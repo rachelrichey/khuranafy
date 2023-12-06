@@ -18,18 +18,3 @@
     max-width: 400px;
     height: auto;
 }
-
-#spotifybar {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
-    max-width: 400px;
-    height: auto;
-}
-
-.image-container {
-    position: relative;
-    display: inline-block;
-}
