@@ -156,6 +156,142 @@ app.get('/session', (req, res) => {
     });
 });
 
+app.get('/percentage', async (req, res) => {
+  let tracks = []
+  let accessToken = req.query.access_token
+
+  const fetchTopTracks = async () => {
+    fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+      },
+    })
+    .then(response => response.json())
+    .then(data => async () => {
+        if (data.error && data.error.status === 401) {
+          const newAccessToken = await refreshAccessToken();
+
+          if (newAccessToken) {
+            accessToken = newAccessToken
+            return fetchTopTracks(); // Refetch with new token
+          }
+        }
+        //get track IDs from the data and store into an array
+        const tracks = data.items.map(track => track.id);
+        return tracks
+    })
+    .catch(error => {
+      console.error('Error:', error)
+    });
+  };
+
+  tracks = await fetchTopTracks();
+
+  const fetchAudioFeatures = async (tracks) => {
+    const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${tracks.join(',')}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+      },
+    });
+    const data = await response.json();
+    return data.audio_features;
+  };
+
+  // Fetch and set audio features
+  let totalTracks = 0;
+  let averageDanceability = 0;
+  let averageEnergy = 0;
+  let averageValence = 0;
+
+  await fetchAudioFeatures(tracks)
+    .then(audioFeatures => {
+      // Calculate average danceability, energy, valence, etc.
+      totalTracks = audioFeatures.length;
+      averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
+      averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+      averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+    })
+    .catch(error => console.error('Error fetching audio features:', error));
+
+    // Fetch and set tracks from Khurana playlists
+    const playlistIds = ['3RB7otXcQQ6MaNIugy21FO', '5k914gSbIe4OUgxMspChey', '7iVWp18nC96ptFPD9lPMmw', '3ZsiOJ9IEWM3FshL04hRIu'];
+    const khuranaTracks = [];
+
+    async function fetchAndExtractTrackIds(playlists) {
+      for (let i = 0; i < playlists.length; i++) {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlists[i]}/tracks`, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + accessToken,
+          },
+        });
+        const data = await response.json();
+
+        console.log('DATA: ', data)
+        const trackIds = data.items.map(track => track.track.id);
+        khuranaTracks.push(...trackIds);
+      }
+    };
+    
+    // Loop through each playlist and fetch track details
+    await fetchAndExtractTrackIds(playlistIds);
+
+    let kTotalTracks = 0;
+    let kAverageDanceability = 0;
+    let kAverageEnergy = 0;
+    let kAverageValence = 0;
+
+    const fetchKhuranaAudioFeatures = async () => {
+      if (khuranaTracks.length === 0) {
+          return;
+      }
+
+      const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${khuranaTracks.join(',')}`, {
+          method: 'GET',
+          headers: {
+              'Authorization': 'Bearer ' + accessToken,
+          },
+      });
+
+      const data = await response.json();
+      const audioFeatures = data.audio_features;
+      kTotalTracks = audioFeatures.length;
+      kAverageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
+      kAverageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+      kAverageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+  };
+
+  await fetchKhuranaAudioFeatures();
+
+  // Calculate similarity when both sets of audio features are available
+  if (tracks.length > 0 && khuranaTracks.length > 0) {
+    // const userAverageEnergy = userTopTracksAudioFeatures.reduce((sum, track) => sum + track.energy, 0) / userTopTracksAudioFeatures.length;
+    // const userAverageDanceability = userTopTracksAudioFeatures.reduce((sum, track) => sum + track.danceability, 0) / userTopTracksAudioFeatures.length;
+    // const userAverageValence = userTopTracksAudioFeatures.reduce((sum, track) => sum + track.valence, 0) / userTopTracksAudioFeatures.length;
+
+    // const khuranaAverageEnergy = khuranaTracksAudioFeatures.reduce((sum, track) => sum + track.energy, 0) / khuranaTracksAudioFeatures.length;
+    // const khuranaAverageDanceability = khuranaTracksAudioFeatures.reduce((sum, track) => sum + track.danceability, 0) / khuranaTracksAudioFeatures.length;
+    // const khuranaAverageValence = khuranaTracksAudioFeatures.reduce((sum, track) => sum + track.valence, 0) / khuranaTracksAudioFeatures.length;
+
+    //use Euclidean distance to calculate distance between averages
+    const distance = Math.sqrt(
+        Math.pow(averageEnergy - kAverageEnergy, 2) +
+        Math.pow(averageDanceability - kAverageDanceability, 2) +
+        Math.pow(averageValence - kAverageValence, 2)
+      );
+    
+      //calc similarity
+      const maxDistance = Math.sqrt(3);
+      const similarityPercentage = ((maxDistance - distance) / maxDistance) * 100;
+      
+      res.send({
+        'similarityPercentage': similarityPercentage
+      })
+  }
+})
+
 const PORT = process.env.PORT || 8888;
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
