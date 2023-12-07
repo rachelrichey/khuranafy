@@ -170,8 +170,11 @@ app.get('/session', (req, res) => {
     });
 });
 
+// PERCENTAGE LOGIC
+
 app.get('/percentage', async (req, res) => {
   const accessToken = req.query.access_token;
+  let trackIds = [];
 
   try {
     const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
@@ -190,13 +193,41 @@ app.get('/percentage', async (req, res) => {
 
     //get track IDs from the data and store into an array
     // Check if data.items is an array before mapping
-    const tracks = Array.isArray(data.items) ? data.items.map(track => track.id) : [];
+    trackIds = Array.isArray(data.items) ? data.items.map(track => track.id) : [];
 
-    res.status(200).send(tracks);
+    // res.status(200).send(trackIds);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Internal Server Error');
   }
+
+  const fetchAudioFeatures = async (trackIds) => {
+    const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${trackIds.join(',')}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+      },
+    });
+
+    // Log the response status
+    const data = await response.json();
+
+    return data.audio_features;
+  };
+
+  if (trackIds.length > 0) {
+    // Fetch and set audio features
+    const audioFeatures = await fetchAudioFeatures(trackIds);
+
+    // Calculate average danceability, energy, valence, etc.
+    const totalTracks = audioFeatures.length;
+    const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
+    const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+    const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+
+    res.status(200).send(audioFeatures);
+  }
+
 });
 
 

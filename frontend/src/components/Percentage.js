@@ -16,18 +16,15 @@ const Percentage = () => {
    const fetchData = async () => {
     try {
       const response = await fetch(`${serverURL}/percentage?access_token=${accessToken}`);
+      
+      if (!response.ok) {
+        console.error('Error:', response.status);
+        return;
+      }
+  
       const data = await response.json();
   
-      console.log('DATA:', data);
-  
-      if (response.ok) {
-        // Handle data
-      } else if (response.status === 401) {
-        console.log('token refresh needed');
-        // Handle token refresh if needed
-      } else {
-        console.error('Error:', data);
-      }
+      console.log('Audio Features:', data);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -37,31 +34,7 @@ const Percentage = () => {
     fetchData();
   }, [accessToken]);
   
-
-    useEffect(() => {
-    // Fetch audio features for user's top tracks
-    const fetchAudioFeatures = async () => {
-        const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${userTopTracks.join(',')}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + accessToken,
-          },
-        });
-        const data = await response.json();
-        return data.audio_features;
-      };
   
-      // Fetch and set audio features
-      fetchAudioFeatures()
-        .then(audioFeatures => {
-          // Calculate average danceability, energy, valence, etc.
-          const totalTracks = audioFeatures.length;
-          const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
-          const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
-          const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
-        })
-        .catch(error => console.error('Error fetching audio features:', error));
-  }, [accessToken, userTopTracks]);
 
 //     useEffect(() => {
 //         // Fetch and set tracks from Khurana playlists
