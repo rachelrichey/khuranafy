@@ -170,6 +170,36 @@ app.get('/session', (req, res) => {
     });
 });
 
+app.get('/percentage', async (req, res) => {
+  const accessToken = req.query.access_token;
+
+  try {
+    const response = await fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.error && data.error.status === 401) {
+      console.log("token refresh needed");
+      return res.status(401).send("Token expired");
+    }
+
+    //get track IDs from the data and store into an array
+    // Check if data.items is an array before mapping
+    const tracks = Array.isArray(data.items) ? data.items.map(track => track.id) : [];
+
+    res.status(200).send(tracks);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 const PORT = process.env.PORT || 8888;
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
