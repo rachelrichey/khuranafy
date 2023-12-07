@@ -8,6 +8,7 @@ import fetch from 'node-fetch';
 import path from 'path';
 import crypto from 'crypto';
 import cors from 'cors';
+import { access } from 'fs';
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -56,7 +57,7 @@ app.get('/login', (req, res) => {
   // Store codeVerifier in user session
   req.session.codeVerifier = codeVerifier;
 
-  const scope = 'user-read-private user-read-email';
+  const scope = 'user-read-private user-read-email user-top-read ';
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -119,13 +120,10 @@ app.get('/refresh_token', async (req, res) => {
     const authOptions = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + (new Buffer.from(clientId + ':' + clientSecret).toString('base64'))
+        'content-type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64')
       },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refresh_token
-      })
+      body: `grant_type=refresh_token&refresh_token=${refresh_token}`
     };
   
     try {
@@ -134,6 +132,11 @@ app.get('/refresh_token', async (req, res) => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
     const data = await response.json();
+
+    const { access_token, refresh_token } = data
+
+    req.session.accessToken = access_token
+    req.session.refreshToken = refresh_token
     
     res.send({
       'access_token': data.access_token,

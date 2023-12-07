@@ -1,52 +1,49 @@
 import React, {useEffect, useState} from 'react';
+import useAuth from '../hooks/useAuth';
 
 const Percentage = () => {
-    const [accessToken, setAccessToken] = useState('');
-    const [refreshToken, setRefreshToken] = useState('');
     const [userTopTracks, setUserTopTracks] = useState([]);
     const [khuranaTracks, setKhuranaTracks] = useState([]);
     const [userTopTracksAudioFeatures, setUserTopTracksAudioFeatures] = useState([]);
     const [khuranaTracksAudioFeatures, setKhuranaTracksAudioFeatures] = useState([]);
     const [similarityPercentage, setSimilarityPercentage] = useState(0);
 
-    //make list of track IDs of current user
-    useEffect(() => {
-        // Retrieve access token from the session storage
-        fetch('http://localhost:8888/session', { credentials: 'include' })
-        .then(response => response.json())
-        .then(sessionData => {
-            const { access_token, refresh_token } = sessionData;
+   const { accessToken, refreshAccessToken} = useAuth();
 
-            if (access_token) {
-                setAccessToken(access_token);
-            }
-            if (refresh_token) {
-                setRefreshToken(refresh_token);
-            }
-        })
-        .catch(error => console.error('Error fetching session data:', error));
-    }, []);
-
+   //error here!!!!!!!!!!
     useEffect(() => {
+      const fetchTopTracks = async () => {
         fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
-        method: 'GET',
-        headers: {
-        'Authorization': 'Bearer' + accessToken,
-        },
-    })
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + accessToken,
+          },
+        })
         .then(response => response.json())
-        .then(data => {
+        .then(data => async () => {
+            if (data.error && data.error.status === 401) {
+              const newAccessToken = await refreshAccessToken();
+
+              if (newAccessToken) {
+                return fetchTopTracks(); // Refetch with new token
+              }
+            }
             //get track IDs from the data and store into an array
             const tracks = data.items.map(track => track.id);
             setUserTopTracks(tracks);
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+          console.error('Error:', error)
+        });
+      };
+
+      fetchTopTracks();
     }, [accessToken]);
 
     useEffect(() => {
     // Fetch audio features for user's top tracks
-    const fetchAudioFeatures = async (trackIds) => {
-        const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${trackIds}`, {
+    const fetchAudioFeatures = async () => {
+        const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${userTopTracks.join(',')}`, {
           method: 'GET',
           headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -57,7 +54,7 @@ const Percentage = () => {
       };
   
       // Fetch and set audio features
-      fetchAudioFeatures(userTopTracks.join(','))
+      fetchAudioFeatures()
         .then(audioFeatures => {
           // Calculate average danceability, energy, valence, etc.
           const totalTracks = audioFeatures.length;
@@ -67,11 +64,10 @@ const Percentage = () => {
         })
         .catch(error => console.error('Error fetching audio features:', error));
   }, [accessToken, userTopTracks]);
-    //handle token refreshing?
 
     useEffect(() => {
         // Fetch and set tracks from Khurana playlists
-        const playlistIds = ['40be701a204e4065', '5151163f0df2480a', '6fb00b3514044e88', '8761eeab09c343cd'];
+        const playlistIds = ['3RB7otXcQQ6MaNIugy21FO', '5k914gSbIe4OUgxMspChey', '7iVWp18nC96ptFPD9lPMmw', '3ZsiOJ9IEWM3FshL04hRIu'];
         const khuranaTracks = [];
     
         const fetchAndExtractTrackIds = async (playlistId) => {
@@ -103,7 +99,7 @@ const Percentage = () => {
         const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${khuranaTracks.join(',')}`, {
             method: 'GET',
             headers: {
-                'Authorization': 'Bearer' + accessToken,
+                'Authorization': 'Bearer ' + accessToken,
             },
         });
 
@@ -113,8 +109,8 @@ const Percentage = () => {
         //calc average features
         const totalTracks = audioFeatures.length;
         const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
-      const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
-      const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+        const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+        const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
     };
 
     fetchKhuranaAudioFeatures();
@@ -141,6 +137,7 @@ const Percentage = () => {
           //calc similarity
           const maxDistance = Math.sqrt(3);
           const similarityPercentage = ((maxDistance - distance) / maxDistance) * 100;
+          console.log(similarityPercentage);
   }
 }, [userTopTracksAudioFeatures, khuranaTracksAudioFeatures]);
 
