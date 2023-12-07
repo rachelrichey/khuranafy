@@ -2,10 +2,10 @@ import React, {useEffect, useState} from 'react';
 import useAuth from '../hooks/useAuth';
 
 const Percentage = () => {
-    const [userTopTracks, setUserTopTracks] = useState([]);
-    const [khuranaTracks, setKhuranaTracks] = useState([]);
-    const [userTopTracksAudioFeatures, setUserTopTracksAudioFeatures] = useState([]);
-    const [khuranaTracksAudioFeatures, setKhuranaTracksAudioFeatures] = useState([]);
+    // const [userTopTracks, setUserTopTracks] = useState([]);
+    // const [khuranaTracks, setKhuranaTracks] = useState([]);
+    // const [userTopTracksAudioFeatures, setUserTopTracksAudioFeatures] = useState([]);
+    // const [khuranaTracksAudioFeatures, setKhuranaTracksAudioFeatures] = useState([]);
     const [similarityPercentage, setSimilarityPercentage] = useState(0);
 
    const { accessToken, refreshAccessToken} = useAuth();
@@ -13,59 +13,55 @@ const Percentage = () => {
    const serverURL = process.env.NODE_ENV === 'development' ? process.env.REACT_APP_DEV_SERVER : process.env.REACT_APP_PROD_SERVER;
 
    //error here!!!!!!!!!!
+   const fetchData = async () => {
+    try {
+      const response = await fetch(`${serverURL}/percentage?access_token=${accessToken}`);
+      const data = await response.json();
+  
+      console.log('DATA:', data);
+  
+      if (response.ok) {
+        // Handle data
+      } else if (response.status === 401) {
+        console.log('token refresh needed');
+        // Handle token refresh if needed
+      } else {
+        console.error('Error:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchData();
+  }, [accessToken]);
+  
+
     useEffect(() => {
-      const fetchTopTracks = async () => {
-        fetch('https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=50', {
+    // Fetch audio features for user's top tracks
+    const fetchAudioFeatures = async () => {
+        const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${userTopTracks.join(',')}`, {
           method: 'GET',
           headers: {
             'Authorization': 'Bearer ' + accessToken,
           },
-        })
-        .then(response => response.json())
-        .then(data => async () => {
-            if (data.error && data.error.status === 401) {
-              const newAccessToken = await refreshAccessToken();
-
-              if (newAccessToken) {
-                return fetchTopTracks(); // Refetch with new token
-              }
-            }
-            //get track IDs from the data and store into an array
-            const tracks = data.items.map(track => track.id);
-            setUserTopTracks(tracks);
-        })
-        .catch(error => {
-          console.error('Error:', error)
         });
+        const data = await response.json();
+        return data.audio_features;
       };
-
-      fetchTopTracks();
-    }, [accessToken]);
-
-//     useEffect(() => {
-//     // Fetch audio features for user's top tracks
-//     const fetchAudioFeatures = async () => {
-//         const response = await fetch(`https://api.spotify.com/v1/audio-features?ids=${userTopTracks.join(',')}`, {
-//           method: 'GET',
-//           headers: {
-//             'Authorization': 'Bearer ' + accessToken,
-//           },
-//         });
-//         const data = await response.json();
-//         return data.audio_features;
-//       };
   
-//       // Fetch and set audio features
-//       fetchAudioFeatures()
-//         .then(audioFeatures => {
-//           // Calculate average danceability, energy, valence, etc.
-//           const totalTracks = audioFeatures.length;
-//           const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
-//           const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
-//           const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
-//         })
-//         .catch(error => console.error('Error fetching audio features:', error));
-//   }, [accessToken, userTopTracks]);
+      // Fetch and set audio features
+      fetchAudioFeatures()
+        .then(audioFeatures => {
+          // Calculate average danceability, energy, valence, etc.
+          const totalTracks = audioFeatures.length;
+          const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
+          const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+          const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+        })
+        .catch(error => console.error('Error fetching audio features:', error));
+  }, [accessToken, userTopTracks]);
 
 //     useEffect(() => {
 //         // Fetch and set tracks from Khurana playlists
