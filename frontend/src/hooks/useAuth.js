@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 
 const useAuth = () => {
-  const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken') || '');  
-  const [refreshToken, setRefreshToken] = useState(localStorage.getItem('refreshToken') || '');
+  const [accessToken, setAccessToken] = useState('');  
+  const [refreshToken, setRefreshToken] = useState('');
   
   const serverURL = process.env.NODE_ENV === 'development' ? process.env.REACT_APP_DEV_SERVER : process.env.REACT_APP_PROD_SERVER;
 
@@ -16,11 +16,9 @@ const useAuth = () => {
           const { access_token, refresh_token } = sessionData;
           if (access_token) {
             setAccessToken(access_token);
-            localStorage.setItem('accessToken', access_token);
           }
           if (refresh_token) {
             setRefreshToken(refresh_token);
-            localStorage.setItem('refreshToken', refresh_token);
           }
         })
         .catch(error => console.error('Error fetching session data:', error));
@@ -34,12 +32,11 @@ const useAuth = () => {
       const data = await response.json();
 
       setAccessToken(data.access_token);
-      localStorage.setItem('accessToken', data.access_token);
 
       if (data.refresh_token) {
         setRefreshToken(data.refresh_token);
-        localStorage.setItem('refreshToken', data.refresh_token);
       }
+
       return data.access_token;
     } catch (error) {
       console.error(error);
