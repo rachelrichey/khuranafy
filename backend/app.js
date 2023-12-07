@@ -116,36 +116,50 @@ app.get('/callback', async (req, res) => {
 
 // Refresh token
 app.get('/refresh_token', async (req, res) => {
-    const refresh_token = req.query.refresh_token;
-    const authOptions = {
+  const refresh_token = req.query.refresh_token;
+  const authOptions = {
       method: 'POST',
       headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64')
+          'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
+          'content-type': 'application/x-www-form-urlencoded'
       },
-      body: `grant_type=refresh_token&refresh_token=${refresh_token}`
-    };
-  
-    try {
-      const response = await fetch('https://accounts.spotify.com/api/token', authOptions);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-    const data = await response.json();
+      body: `grant_type=refresh_token&refresh_token=${refresh_token}`,
+  };
 
-    const { access_token, refresh_token } = data
+  // Log the request details
+  console.log('Requesting Spotify token with the following options:', authOptions);
 
-    req.session.accessToken = access_token
-    req.session.refreshToken = refresh_token
-    
-    res.send({
-      'access_token': data.access_token,
-      'refresh_token': data.refresh_token // Only send if refresh_token is present in the response
-    });
-  } catch (error) {
-    console.error('Error during token refresh:', error);
-    res.status(500).send('Error refreshing token');
-  }
+  fetch('https://accounts.spotify.com/api/token', authOptions)
+      .then(response => {
+          // Log the response status
+          console.log('Response status:', response.status, response.statusText);
+
+          // Log the full response body for debugging
+          return response.text().then(text => {
+              console.log('Response body:', text);
+              return JSON.parse(text); // Parse the JSON in the response
+          });
+      })
+      .then(data => {
+          if (data.error) {
+              console.error('Error in response:', data.error);
+              res.status(400).send(data.error);
+          } else {
+              const access_token = data.access_token;
+              const refresh_token = data.refresh_token;
+
+              // Update tokens
+              req.session.accessToken = access_token;
+              req.session.refreshToken = refresh_token;
+              
+              // Send new access token back to client
+              res.send({ access_token, refresh_token });
+          }
+      })
+      .catch(error => {
+          console.error('Fetch error:', error);
+          res.status(500).send('Internal Server Error');
+      });
 });
 
 // Retrieve tokens from session storage
