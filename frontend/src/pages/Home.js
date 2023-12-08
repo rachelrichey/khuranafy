@@ -1,7 +1,6 @@
 import React from 'react';
 import './Home.css';
 import Percentage from '../components/Percentage';
-import PlaylistGenerator from '../components/PlaylistGenerator.js';
 
 function Home() {
     return (

@@ -16,6 +16,6 @@ The build is minified and the filenames include the hashes.\
 
 The Spotify API authorization flow was mainly found from https://github.com/Kickblip. I got some help adapting this code for my project from my brother.
 
-This web app utilizes the Spotify Web API to allow the user to log in with their Spotify account in order to receive a "taste match" percentage based on their music taste and Dean Khurana's. To run the program locally, run npm run start in your terminal. You need to have node installed. You will be redirected to the login page where you click the login button to be taken to Spotify. You can now securely log in with your Spotify profile and receive a "token" from Spotify. You are then redirected to the home page where you will see your "taste match" percentage. The token expires after an hour, so the token refresh button refreshes it to restart this timer. 
+This web app utilizes the Spotify Web API to allow the user to log in with their Spotify account in order to receive a "taste match" percentage based on their music taste and Dean Khurana's. To run the program locally, run npm run start in your terminal. You need to have node installed. You will be redirected to the login page where you click the login button to be taken to Spotify. Right now, the project is in developer mode, so Spotify accounts need to be whitelisted in order to log in. To use the API, use the account ____________. You can now securely log in with the Spotify profile and receive a "token" from Spotify. You are then redirected to the home page where you will see your "taste match" percentage. The token expires after an hour, so the token refresh button refreshes it to restart this timer. 
 
-FINISH AFTER IMPLEMENTATION, add url of video here
+video url

@@ -8,7 +8,7 @@ import fetch from 'node-fetch';
 import path from 'path';
 import crypto from 'crypto';
 import cors from 'cors';
-import { access } from 'fs';
+import fs, { truncate } from 'fs';
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
@@ -174,6 +174,7 @@ app.get('/session', (req, res) => {
 
 app.get('/percentage', async (req, res) => {
   const accessToken = req.query.access_token;
+
   let trackIds = [];
 
   try {
@@ -210,24 +211,59 @@ app.get('/percentage', async (req, res) => {
     });
 
     // Log the response status
+    console.log(response.status, response.statusText);
     const data = await response.json();
 
     return data.audio_features;
   };
+
+  let totalTracks = 0;
+  let averageDanceability = 0;
+  let averageEnergy = 0;
+  let averageValence = 0;
 
   if (trackIds.length > 0) {
     // Fetch and set audio features
     const audioFeatures = await fetchAudioFeatures(trackIds);
 
     // Calculate average danceability, energy, valence, etc.
-    const totalTracks = audioFeatures.length;
-    const averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
-    const averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
-    const averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
+    totalTracks = audioFeatures.length;
+    averageDanceability = audioFeatures.reduce((sum, track) => sum + track.danceability, 0) / totalTracks;
+    averageEnergy = audioFeatures.reduce((sum, track) => sum + track.energy, 0) / totalTracks;
+    averageValence = audioFeatures.reduce((sum, track) => sum + track.valence, 0) / totalTracks;
 
-    res.status(200).send(audioFeatures);
-  }
+    // res.status(200).send(audioFeatures);
+    console.log("audio feats successful");
+  };
 
+  // Track ids for Khurana's playlist are in trackIds.json
+  // Read the JSON file
+  const rawData = fs.readFileSync('trackIds.json');
+  const data = JSON.parse(rawData);
+
+  // Extract track IDs
+  const khuranaTracks = data.items.map(item => item.track.id);
+
+  const truncatedKhuranaTracks = khuranaTracks.slice(0, 90);
+
+  // Found through audioFeatures script
+  let khuranaTotalTracks = truncatedKhuranaTracks.length;
+  let khuranaAverageDanceability =  0.6319368421052631;
+  let khuranaAverageEnergy = 0.670621052631579;
+  let khuranaAverageValence = 0.62696;
+
+  //use Euclidean distance to calculate distance between averages
+  const distance = Math.sqrt(
+      Math.pow(averageEnergy - khuranaAverageEnergy, 2) +
+      Math.pow(averageDanceability - khuranaAverageDanceability, 2) +
+      Math.pow(averageValence - khuranaAverageValence, 2)
+  );
+  
+  //calc similarity
+  const maxDistance = Math.sqrt(3);
+  const similarityPercentage = Math.round(((maxDistance - distance) / maxDistance) * 100);
+  
+  res.status(200).send({ similarityPercentage });
 });
 
 
